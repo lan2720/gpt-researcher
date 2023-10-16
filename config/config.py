@@ -21,6 +21,7 @@ class Config(metaclass=Singleton):
         self.allow_downloads = False
 
         self.selenium_web_browser = os.getenv("USE_WEB_BROWSER", "chrome")
+        print(f"selenium_web_browser: {self.selenium_web_browser}")
         self.llm_provider = os.getenv("LLM_PROVIDER", "ChatOpenAI")
         self.fast_llm_model = os.getenv("FAST_LLM_MODEL", "gpt-3.5-turbo-16k")
         self.smart_llm_model = os.getenv("SMART_LLM_MODEL", "gpt-4")
@@ -29,8 +30,11 @@ class Config(metaclass=Singleton):
         self.browse_chunk_max_length = int(os.getenv("BROWSE_CHUNK_MAX_LENGTH", 8192))
         self.summary_token_limit = int(os.getenv("SUMMARY_TOKEN_LIMIT", 700))
 
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.temperature = float(os.getenv("TEMPERATURE", "1"))
+        self.azure_api_base = os.getenv("AZURE_API_BASE")
+        self.azure_api_key = os.getenv("AZURE_API_KEY")
+        self.azure_api_version = os.getenv("AZURE_API_VERSION", "2023-07-01-preview")
+        self.api_type = os.getenv("API_TYPE", "azure")
+        self.temperature = float(os.getenv("TEMPERATURE", "0"))
 
         self.user_agent = os.getenv(
             "USER_AGENT",
@@ -40,7 +44,7 @@ class Config(metaclass=Singleton):
 
         self.memory_backend = os.getenv("MEMORY_BACKEND", "local")
         # Initialize the OpenAI API client
-        openai.api_key = self.openai_api_key
+        openai.api_key = self.azure_api_key
 
     def set_fast_llm_model(self, value: str) -> None:
         """Set the fast LLM model value."""
@@ -65,6 +69,10 @@ class Config(metaclass=Singleton):
     def set_openai_api_key(self, value: str) -> None:
         """Set the OpenAI API key value."""
         self.openai_api_key = value
+    
+    def set_azure_api_key(self, value: str) -> None:
+        """Set the OpenAI API key value."""
+        self.azure_api_key = value
 
     def set_debug_mode(self, value: bool) -> None:
         """Set the debug mode value."""
@@ -74,7 +82,7 @@ class Config(metaclass=Singleton):
 def check_openai_api_key() -> None:
     """Check if the OpenAI API key is set in config.py or as an environment variable."""
     cfg = Config()
-    if not cfg.openai_api_key:
+    if not cfg.azure_api_key:
         print(
             Fore.RED
             + "Please set your OpenAI API key in .env or as an environment variable."

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
-
+import os
 from fastapi import WebSocket
 import time
 
 import openai
 from langchain.adapters import openai as lc_openai
+from litellm import completion
 from colorama import Fore, Style
 from openai.error import APIError, RateLimitError
 
@@ -15,7 +16,11 @@ from config import Config
 
 CFG = Config()
 
-openai.api_key = CFG.openai_api_key
+# TODO: 增加azure配置
+openai.api_base = CFG.azure_api_base
+openai.api_key = CFG.azure_api_key
+openai.api_version = CFG.azure_api_version
+openai.api_type = CFG.api_type
 
 from typing import Optional
 import logging
@@ -62,12 +67,15 @@ def send_chat_completion_request(
     messages, model, temperature, max_tokens, stream, websocket
 ):
     if not stream:
-        result = lc_openai.ChatCompletion.create(
+        result = completion(
             model=model, # Change model here to use different models
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
-            provider=CFG.llm_provider, # Change provider here to use a different API
+            # api_version=os.getenv("AZURE_API_VERSION", "2023-07-01-preview"),
+            custom_llm_provider=os.getenv("API_TYPE", "azure"),
+            # api_type=os.getenv("API_TYPE", "azure"),
+            # provider=CFG.llm_provider, # Change provider here to use a different API
         )
         return result["choices"][0]["message"]["content"]
     else:
@@ -79,14 +87,19 @@ async def stream_response(model, messages, temperature, max_tokens, websocket):
     response = ""
     print(f"streaming response...")
 
-    for chunk in lc_openai.ChatCompletion.create(
+    # TODO: 此处stream=True, 暂时修改为False
+    for chunk in completion(
             model=model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
-            provider=CFG.llm_provider,
-            stream=True,
+            custom_llm_provider=os.getenv("API_TYPE", "azure"),
+            # api_version=os.getenv("AZURE_API_VERSION", "2023-07-01-preview"),
+            # api_type=os.getenv("API_TYPE", "azure"),
+            # provider=CFG.llm_provider,
+            stream=False,
     ):
+        print(f"chunk: {chunk}")
         content = chunk["choices"][0].get("delta", {}).get("content")
         if content is not None:
             response += content

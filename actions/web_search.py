@@ -2,7 +2,7 @@ from __future__ import annotations
 import json
 from duckduckgo_search import DDGS
 
-ddgs = DDGS()
+ddgs = DDGS(proxies="http://172.27.9.200:15672")
 
 def web_search(query: str, num_results: int = 4) -> str:
     """Useful for general internet search queries."""

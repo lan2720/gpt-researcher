@@ -1,6 +1,6 @@
 """Selenium web scraping module."""
 from __future__ import annotations
-
+import os
 import logging
 import asyncio
 from pathlib import Path
@@ -44,6 +44,7 @@ async def async_browse(url: str, question: str, websocket: WebSocket) -> str:
     Returns:
         str: The answer and links to the user
     """
+    print("进入async_browse")
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=8)
 
@@ -112,21 +113,28 @@ def scrape_text_with_selenium(url: str) -> tuple[WebDriver, str]:
         "safari": SafariOptions,
         "firefox": FirefoxOptions,
     }
+    print(f"当前选择的浏览器是: {CFG.selenium_web_browser}")
 
     options = options_available[CFG.selenium_web_browser]()
+    print("CFG.selenium_web_browser: ", CFG.selenium_web_browser)
     options.add_argument(f"user-agent={CFG.user_agent}")
     options.add_argument('--headless')
     options.add_argument("--enable-javascript")
+    proxy_address = os.getenv("PROXY", "")
+    print(f"获取到proxy: {proxy_address}")
+    options.add_argument(f'--proxy-server={proxy_address}')
 
     if CFG.selenium_web_browser == "firefox":
         service = Service(executable_path=GeckoDriverManager().install())
         driver = webdriver.Firefox(
             service=service, options=options
         )
+        print("****************创建了firefox的driver")
     elif CFG.selenium_web_browser == "safari":
         # Requires a bit more setup on the users end
         # See https://developer.apple.com/documentation/webkit/testing_with_webdriver_in_safari
         driver = webdriver.Safari(options=options)
+        print("****************创建了safari的driver")
     else:
         if platform == "linux" or platform == "linux2":
             options.add_argument("--disable-dev-shm-usage")
@@ -136,6 +144,7 @@ def scrape_text_with_selenium(url: str) -> tuple[WebDriver, str]:
             "prefs", {"download_restrictions": 3}
         )
         driver = webdriver.Chrome(options=options)
+        print("****************创建了chrome的driver")
 
     print(f"scraping url {url}...")
     driver.get(url)

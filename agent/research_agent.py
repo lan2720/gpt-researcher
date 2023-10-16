@@ -75,6 +75,7 @@ class ResearchAgent:
         return new_urls
 
     async def call_agent(self, action, stream=False, websocket=None):
+        print(f"action: {action}")
         messages = [{
             "role": "system",
             "content": self.agent_role_prompt
@@ -82,10 +83,11 @@ class ResearchAgent:
             "role": "user",
             "content": action,
         }]
+        # TODO: 暂时将stream=stream改为False
         answer = create_chat_completion(
             model=CFG.smart_llm_model,
             messages=messages,
-            stream=stream,
+            stream=False,
             websocket=websocket,
         )
         return answer
@@ -104,8 +106,10 @@ class ResearchAgent:
         Args: query (str): The query to run the async search for
         Returns: list[str]: The async search for the given query
         """
+        print("进入async_search")
         search_results = json.loads(web_search(query))
         new_search_urls = self.get_new_urls([url.get("href") for url in search_results])
+        print(f"获取到的所有new_search_urls: {new_search_urls}")
 
         await self.stream_output(f"🌐 Browsing the following sites for relevant information: {new_search_urls}...")
 
@@ -184,5 +188,6 @@ class ResearchAgent:
         """
         concepts = await self.create_concepts()
         for concept in concepts:
-            answer = await self.call_agent(prompts.generate_lesson_prompt(concept), stream=True)
+            # TODO: 此处stream=True, 暂时修改为False
+            answer = await self.call_agent(prompts.generate_lesson_prompt(concept), stream=False)
             await write_md_to_pdf("Lesson", self.dir_path, answer)
