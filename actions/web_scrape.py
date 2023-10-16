@@ -45,7 +45,9 @@ async def async_browse(url: str, question: str, websocket: WebSocket) -> str:
         str: The answer and links to the user
     """
     print("进入async_browse")
+    # 协程获取事件循环
     loop = asyncio.get_event_loop()
+    # 定义了8线程的线程池
     executor = ThreadPoolExecutor(max_workers=8)
 
     print(f"Scraping url {url} with question {question}")
@@ -53,8 +55,12 @@ async def async_browse(url: str, question: str, websocket: WebSocket) -> str:
         {"type": "logs", "output": f"🔎 Browsing the {url} for relevant about: {question}..."})
 
     try:
+        # 它会将 func(*args) 函数添加到线程池(executor)中，并返回一个协程对象。
+        # 协程对象可以使用 await 关键字等待函数执行完成，并返回函数的结果（driver, text）
         driver, text = await loop.run_in_executor(executor, scrape_text_with_selenium, url)
+        # 将add_header(driver)加入线程池: add_header(driver)是对正在分析的网页加一个遮罩层
         await loop.run_in_executor(executor, add_header, driver)
+        # 将summary.summarize_text(url, text, question, driver)加入到线程池, 等待处理
         summary_text = await loop.run_in_executor(executor, summary.summarize_text, url, text, question, driver)
 
         await websocket.send_json(
@@ -120,12 +126,12 @@ def scrape_text_with_selenium(url: str) -> tuple[WebDriver, str]:
     options.add_argument(f"user-agent={CFG.user_agent}")
     options.add_argument('--headless')
     options.add_argument("--enable-javascript")
-    proxy_address = os.getenv("PROXY", "")
-    print(f"获取到proxy: {proxy_address}")
-    options.add_argument(f'--proxy-server={proxy_address}')
+    # proxy_address = os.getenv("PROXY", "")
+    # print(f"获取到proxy: {proxy_address}")
+    # options.add_argument(f'--proxy-server={proxy_address}')
 
     if CFG.selenium_web_browser == "firefox":
-        service = Service(executable_path=GeckoDriverManager().install())
+        service = Service(executable_path=os.getenv("DRIVER_PATH", ""))
         driver = webdriver.Firefox(
             service=service, options=options
         )

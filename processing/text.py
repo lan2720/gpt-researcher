@@ -44,7 +44,7 @@ def split_text(text: str, max_length: int = 8192) -> Generator[str, None, None]:
 
 
 def summarize_text(
-    url: str, text: str, question: str, driver: Optional[WebDriver] = None
+    url: str, text: str, question: str, driver: Optional[WebDriver] = None, model=CFG.fast_llm_model
 ) -> str:
     """Summarize text using the OpenAI API
 
@@ -76,7 +76,7 @@ def summarize_text(
         messages = [create_message(chunk, question)]
 
         summary = create_chat_completion(
-            model=CFG.fast_llm_model,
+            model=model,
             messages=messages,
             max_tokens=CFG.summary_token_limit
         )
@@ -89,12 +89,13 @@ def summarize_text(
     messages = [create_message(combined_summary, question)]
 
     final_summary = create_chat_completion(
-        model=CFG.fast_llm_model,
+        model=model,
         messages=messages,
         max_tokens=CFG.summary_token_limit
     )
     print("Final summary length: ", len(combined_summary))
-    print(final_summary)
+    print(f"combined_summary: {combined_summary}")
+    print(f"final_summary: {final_summary}")
 
     return final_summary
 

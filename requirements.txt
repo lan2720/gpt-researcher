@@ -19,3 +19,4 @@ markdown
 langchain==0.0.308
 tavily-python
 permchain==0.0.3
+litellm==0.8.4
